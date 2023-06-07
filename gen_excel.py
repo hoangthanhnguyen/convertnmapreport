@@ -1,12 +1,16 @@
 import re
 import os
 import pandas as pd
+import argparse
 
-# requirement pandas, openpyxl
+# Initialize parser
+parser = argparse.ArgumentParser(prog='gen_excel.py', description='Simple tool for convert raw nmap report.', add_help=True)
 
 
-# declare for get files and ips from folder
-path = os.listdir(path='.')
+# Adding optional argument
+parser.add_argument("-p", "--path", default=".", help="Path to nmap report folder")
+parser.add_argument("-o", "--output", default="./result.xlsx", help="Path to export excel file")
+
 lstfile = []
 lstip = []
 
@@ -44,17 +48,16 @@ def getfile(path):
     return lstfile
 
 
-def getdatafile(lstfile):
+def getdatafile(lstfile, folder):
     for filename in lstfile:
         ip = filename.replace(".txt", "")
-        with open(filename) as f:
+        with open(str(folder) + str(filename)) as f:
             data = f.read()
             getinfo(regex, data, ip)
     return lst
 
 
-def main():
-    getdatafile(getfile(path))
+def write_to_excel(lst, sheet_name, output):
     for i in lst:
         # https://www.programmingfunda.com/how-to-convert-dictionary-to-excel-in-python/
         # convert into dataframe
@@ -62,7 +65,26 @@ def main():
         # convert into Excel
         # df.to_excel("test3.xlsx", index=False)  # simple
         # merge row by https://stackoverflow.com/a/68208815
-        df.set_index(df.columns.tolist()).to_excel('filename.xlsx')
+        df.set_index(df.columns.tolist()).to_excel(str(output), sheet_name=sheet_name)
+
+
+def main():
+
+    parser.print_help()
+
+    # Read arguments from command line
+    args = parser.parse_args()
+
+    # get path argument for get files and ips from folder
+    path_to_report_folder = args.path
+    path = os.listdir(path=path_to_report_folder)
+
+    # get output argument to export file
+    output = args.output
+
+    getdatafile(getfile(path), path_to_report_folder)
+    # write sheet Server
+    write_to_excel(lst, "Server", output)
 
 
 if __name__ == "__main__":
